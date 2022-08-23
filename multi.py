@@ -1,21 +1,13 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-#from prediction import estacoes_t
-import os
 import pandas as pd
 from datetime import *
 from functools import reduce
 import numpy as np
 from numpy import asarray
 import cv2
-import rpy2.robjects as robjects
-import rpy2.robjects.packages as rpackages
-
-#Importando os dados já completos de prediction
-
-#from prediction import estacoes_t as airpol
-#airpol = pd.read_csv('C:\Users\dwlar\Desktop\Projetos\LACCAN\version_multi01\Multivariate_air_pollution\airpol.csv')
+import os
+os.environ['R_HOME'] = 'C:\Program Files\R\R-4.2.1'
+#import rpy2.robjects as robjects
+#import rpy2.robjects.packages as rpackages
 airpol = pd.read_csv('airpol.csv')
 
 def as_grid25(dataMatrix, gridsize = 25, nmax = 1000):
@@ -75,19 +67,8 @@ def combination(station_id, var_name):
     df_cols = np.delete(df_cols,np.where(df_cols[:,1] == 'SO2') ,axis=0)
     df_cols = np.delete(df_cols,np.where(df_cols[:,1] == 'NO2') ,axis=0)
     df_cols = pd.DataFrame(data = df_cols,columns = ['Var2', 'Var1'])
+
     return df_cols
-
-'''
-def snapshot_series(station_coords, st_airpol_nafix, var_name, station_id):
-    airpol_snap = st_airpol_nafix
-    
-
-def prediction_series(airpol,var_name,station_coords):
-    for(i in range(len(airpol))):
-        airpol_snapshot = airpol
-    return 'ok'
-'''
-
 sp_coords = map_coords()
 #No original as coordenadas sao convertidas em um csv...talvez fazer
 #write.csv(sp_coords, "../environment/spcoords_25x25.csv", row.names=FALSE)
@@ -106,7 +87,31 @@ var_name_CO_PM10_O3 = ["CO", "MP10", "O3"]
 station_id_CO_PM10_03 = ["83-","85-","72-","99-"]
 
 CO_PM10_03_coords = pd.DataFrame(station_id_coord, columns = ['station_id', 'x','y']).drop([0,1,2,7,8]).reset_index()
+CO_PM10_03_coords['coordinates'] = CO_PM10_03_coords.apply(lambda x: [x['x'], x['y']], axis=1)
+airpol_1st_pred = airpol.copy()
+CO,PM10,O3 = [],[],[]
+for key in airpol_1st_pred.columns:
+    if(key == 'date'):
+        pass
+    else:
+        if(key[:3] in station_id_CO_PM10_03):
+            if(key[3:] == "CO"):
+                #coords = CO_PM10_03_coords[CO_PM10_03_coords['station_id']==key[:3]]['coordinates'].values[0]
+                CO.append(airpol_1st_pred[key])
+            elif(key[3:] == "PM10"):
+                #coords = CO_PM10_03_coords[CO_PM10_03_coords['station_id']==key[:3]]['coordinates'].values[0]
+                PM10.append(airpol_1st_pred[key])
+            elif(key[3:] == "O3"):
+                #coords = CO_PM10_03_coords[CO_PM10_03_coords['station_id']==key[:3]]['coordinates'].values[0]
+                O3.append(airpol_1st_pred[key])
+            else:
+                pass
+        else:
+            airpol_1st_pred = airpol_1st_pred.drop(columns=[key])
+#df = pd.DataFrame(data, columns = ['CO, 'PM10','O3']
+dic_test= {'Coordinates':CO_PM10_03_coords['coordinates'],'CO': CO, 'PM10': PM10, 'O3': O3}
+dic_test = pd.DataFrame(dic_test)
+def snapshot_series(station_coords, st_airpol_nafix, var_name, station_id):
+    airpol_snap = st_airpol_nafix
 #CO_PM10_03_snapshot_series = snapshot_series(CO_PM10_03_coords,airpol,var_name_CO_PM10_O3,station_id_CO_PM10_03)
 #CO_PM10_03_reconst = predict_series(CO_PM10_03_snapshot_series,var_name_CO_PM10_O3,sp_coords)
-
-
